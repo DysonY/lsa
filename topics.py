@@ -3,9 +3,11 @@ import os.path
 import json
 import gzip
 
+
 from gensim import corpora
 from gensim.models import LsiModel
 from gensim.models.coherencemodel import CoherenceModel
+from gensim.models.tfidfmodel import TfidfModel
 from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem.snowball import GermanStemmer
@@ -65,8 +67,10 @@ def prepare_corpus(docs):
 # Get LSI model
 def get_model(docs, num_topics, num_words):
     dictionary, doc_term_matrix = prepare_corpus(docs)
-    model = LsiModel(doc_term_matrix, num_topics=num_topics, \
-                    id2word=dictionary) 
+    tfidf = TfidfModel(doc_term_matrix, id2word=dictionary)
+    weights = tfidf.__getitem__(doc_term_matrix)
+    model = LsiModel(weights, num_topics=num_topics, \
+                    id2word=dictionary)
     print(model.print_topics(num_topics=num_topics, num_words=num_words))
     return model, doc_term_matrix
 
@@ -90,14 +94,23 @@ def lsa(num_topics=7, num_words=10):
 
 # Run directly from command line
 if __name__ == '__main__':
-    #assert len(sys.argv) == 3
-    #num_topics, num_words = int(sys.argv[1]), int(sys.argv[2])
+    assert len(sys.argv) == 3
+    num_topics, num_words = int(sys.argv[1]), int(sys.argv[2])
+    lsa(num_topics, num_words)
+
+    # Uncomment the following block to test the coherence for
+    # a combination of num_topics and num_words
+
+    '''
     docs, titles = load('news_3d_druck_texts.json.gz', \
                         'news_3d_druck_titles.json.gz')
     clean_text = preprocess(docs)
     print('\n')
+
     for num_topics in range(2, 11):
         for num_words in range(2, 11):
             model, corpus = get_model(clean_text, num_topics, num_words)
-            coh = coherence(model, corpus)
-            print(f'Topics: {num_topics}\tWords: {num_words}\tCoherence: {coh}')
+            c = coherence(model, corpus)
+            print(f'Topics: {num_topics}\tWords: {num_words}\tCoherence: {c}')
+    '''
+
