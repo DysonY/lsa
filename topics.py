@@ -35,8 +35,8 @@ def load(text_filepath, titles_filepath):
 # 3) Lemmatization (using stemmer)
 def clean(text, tokenizer, stops, stemmer):
     tokens = tokenizer.tokenize(text.lower())
-    no_stops = [ t for t in tokens if t not in stops ]
-    return [ stemmer.stem(t) for t in no_stops]
+    is_valid = lambda x : (x not in stops) and (len(x) > 1)
+    return [ stemmer.stem(t) for t in tokens if is_valid(t) ]
 
 
 # Perform preprocessing on each article
