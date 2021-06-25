@@ -5,6 +5,7 @@ import gzip
 
 from gensim import corpora
 from gensim.models import LsiModel
+from gensim.models.coherencemodel import CoherenceModel
 from nltk import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem.snowball import GermanStemmer
@@ -67,7 +68,13 @@ def get_model(docs, num_topics, num_words):
     model = LsiModel(doc_term_matrix, num_topics=num_topics, \
                     id2word=dictionary) 
     print(model.print_topics(num_topics=num_topics, num_words=num_words))
-    return model
+    return model, doc_term_matrix
+
+
+# Find coherence of model
+def coherence(model, corpus):
+    cm = CoherenceModel(model=model, corpus=corpus, coherence='u_mass')
+    return cm.get_coherence()
 
 
 # Main function
@@ -76,10 +83,21 @@ def lsa(num_topics=7, num_words=10):
                         'news_3d_druck_titles.json.gz')
     clean_text = preprocess(docs)
     print('\nGenerating LSA model')
-    return get_model(clean_text, num_topics, num_words)
+    model, corpus = get_model(clean_text, num_topics, num_words)
+    print(f'Coherence: {coherence(model, corpus)}')
+    return model
 
 
 # Run directly from command line
 if __name__ == '__main__':
-    assert len(sys.argv) == 3
-    lsa(int(sys.argv[1]), int(sys.argv[2]))
+    #assert len(sys.argv) == 3
+    #num_topics, num_words = int(sys.argv[1]), int(sys.argv[2])
+    docs, titles = load('news_3d_druck_texts.json.gz', \
+                        'news_3d_druck_titles.json.gz')
+    clean_text = preprocess(docs)
+    print('\n')
+    for num_topics in range(2, 11):
+        for num_words in range(2, 11):
+            model, corpus = get_model(clean_text, num_topics, num_words)
+            coh = coherence(model, corpus)
+            print(f'Topics: {num_topics}\tWords: {num_words}\tCoherence: {coh}')
